@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import pygame
+import time
 import cv2
 import sys
 import csv
@@ -20,6 +21,7 @@ ratio = width / height
 
 offsetx, offsety = 0, 0
 moving = False
+next_frame = False
 fixed_mousex, fixed_mousey = 0, 0
 
 scale = 1.0
@@ -46,16 +48,13 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_SPACE:
+                next_frame = False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                if not points[-1][0] and points[-1][1]:
-                    continue
+                next_frame = True
 
-                success, frame = video.read()
-                image = pygame.image.frombuffer(frame.tobytes(), frame.shape[1::-1], "BGR")
-                new = True
-
-                points.append([None, points[-1][1]])
             if event.key == pygame.K_BACKSPACE:
                 offsetx, offsety = 0, 0
                 scale = 1.0
@@ -83,6 +82,16 @@ while run:
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 2:
                 moving = False
+
+    if next_frame:
+        if not points[-1][0] and points[-1][1]: # if an origin is set, expect a tracked point
+            continue
+
+        success, frame = video.read()
+        image = pygame.image.frombuffer(frame.tobytes(), frame.shape[1::-1], "BGR")
+        new = True
+
+        points.append([None, points[-1][1]])
 
     if not success:
         run = False
