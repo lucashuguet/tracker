@@ -37,6 +37,7 @@ ratio = width / height
 offsetx, offsety = 0, 0
 moving = False
 next_frame = False # if the key for next frame is currently held
+one_frame = False # frame per frame
 fixed_mousex, fixed_mousey = 0, 0
 
 scale = 1.0
@@ -67,11 +68,14 @@ while run:
         if event.type == pygame.QUIT:
             run = False
         if event.type == pygame.KEYUP:
-            if event.key == pygame.K_SPACE:
+            if event.key == pygame.K_SPACE or event.key == pygame.K_RIGHT:
                 next_frame = False
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
+            if event.key == pygame.K_SPACE or event.key == pygame.K_RIGHT:
                 next_frame = True
+
+            if event.key == pygame.K_f:
+                one_frame = True
 
             if event.key == pygame.K_BACKSPACE:
                 offsetx, offsety = 0, 0
@@ -114,10 +118,15 @@ while run:
             if not points[-1][i]:
                 next_frame = False
 
-    if next_frame:
-        success, frame = video.read()
-        image = pygame.image.frombuffer(frame.tobytes(), frame.shape[1::-1], "BGR")
+    if next_frame or one_frame:
+        try:
+            success, frame = video.read()
+            image = pygame.image.frombuffer(frame.tobytes(), frame.shape[1::-1], "BGR")
+        except Exception:
+            print("reached video end")
+            run = False
         new = True
+        one_frame = False
 
         points.append([points[-1][0]] + [None] * n)
 
