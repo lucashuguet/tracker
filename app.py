@@ -121,10 +121,11 @@ while run:
             if event.button == 2:
                 moving = False
 
-    if next_frame and points[-1][0] and index == n: # if an origin is set, expect all tracked point
+    if (next_frame or one_frame) and points[-1][0]: # if an origin is set, expect all tracked point
         for i in range(1, n+1):
             if not points[-1][i]:
                 next_frame = False
+                one_frame = False
 
     if next_frame or one_frame:
         try:
