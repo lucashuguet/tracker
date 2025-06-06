@@ -26,6 +26,7 @@ def draw_circle_alpha(surface, color, center, radius):
 video = cv2.VideoCapture(sys.argv[1])
 success, frame = video.read()
 fps = video.get(cv2.CAP_PROP_FPS)
+frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 
 if x := input("fps [" + str(fps) + "]: "):
     fps = float(x)
@@ -58,8 +59,15 @@ clock = pygame.time.Clock()
 image = pygame.image.frombuffer(frame.tobytes(), frame.shape[1::-1], "BGR")
 scaled = image
 
+pygame.init()
+font = pygame.font.Font("./liberationmono.ttf", 32)
+
 run = success
 while run:
+    frame_idx = int(video.get(cv2.CAP_PROP_POS_FRAMES))
+    text = font.render(str(frame_idx) + "/" + str(frame_count), True, (255, 255, 255), (0, 0, 0))
+    rect = text.get_rect()
+
     nw, nh = pygame.display.get_surface().get_size()
     if nw != w or nh != h:
         w, h = nw, nh
@@ -113,7 +121,7 @@ while run:
             if event.button == 2:
                 moving = False
 
-    if next_frame and points[-1][0]: # if an origin is set, expect all tracked point
+    if next_frame and points[-1][0] and index == n: # if an origin is set, expect all tracked point
         for i in range(1, n+1):
             if not points[-1][i]:
                 next_frame = False
@@ -168,6 +176,9 @@ while run:
         realx = int(scaled.get_width() / width * origin[0]) + x + offsetx
         realy = int(scaled.get_height() / height * origin[1]) + y + offsety
         draw_circle_alpha(window, colors[0] + (255.,), (realx, realy), CIRCLE_RADIUS * scale)
+
+    rect.center = (150, 20)
+    window.blit(text, rect)
 
     pygame.display.flip()
     clock.tick(fps)
