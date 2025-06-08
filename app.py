@@ -18,10 +18,10 @@ def gen_colors(n):
     return colors
 
 def draw_circle_alpha(surface, color, center, radius):
-    target_rect = pygame.Rect(center, (0, 0)).inflate((radius * 2, radius * 2))
-    shape_surf = pygame.Surface(target_rect.size, pygame.SRCALPHA)
+    target_frame_pos_rect = pygame.Rect(center, (0, 0)).inflate((radius * 2, radius * 2))
+    shape_surf = pygame.Surface(target_frame_pos_rect.size, pygame.SRCALPHA)
     pygame.draw.circle(shape_surf, color, (radius, radius), radius)
-    surface.blit(shape_surf, target_rect)
+    surface.blit(shape_surf, target_frame_pos_rect)
 
 video = cv2.VideoCapture(sys.argv[1])
 success, frame = video.read()
@@ -53,6 +53,8 @@ colors = gen_colors(n+1)
 points = [[None] * (n+1)] # origin, tracked_1, ..., tracked_n
 index = 1 # next point to be placed
 
+time = 0.0
+
 window = pygame.display.set_mode((w, h), pygame.RESIZABLE)
 clock = pygame.time.Clock()
 
@@ -65,8 +67,11 @@ font = pygame.font.Font("./liberationmono.ttf", 32)
 run = success
 while run:
     frame_idx = int(video.get(cv2.CAP_PROP_POS_FRAMES))
-    text = font.render(str(frame_idx) + "/" + str(frame_count), True, (255, 255, 255), (0, 0, 0))
-    rect = text.get_rect()
+    frame_pos_text = font.render(str(frame_idx) + "/" + str(frame_count), True, (255, 255, 255), (0, 0, 0))
+    frame_pos_rect = frame_pos_text.get_rect()
+
+    time_text = font.render(str(round(time, 3)), True, (255, 255, 255), (0, 0, 0))
+    time_rect = time_text.get_rect()
 
     nw, nh = pygame.display.get_surface().get_size()
     if nw != w or nh != h:
@@ -79,10 +84,10 @@ while run:
             if event.key == pygame.K_SPACE or event.key == pygame.K_RIGHT:
                 next_frame = False
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE or event.key == pygame.K_RIGHT:
+            if event.key in [pygame.K_SPACE, pygame.K_RIGHT]:
                 next_frame = True
 
-            if event.key == pygame.K_f:
+            if event.key in [pygame.K_f, pygame.K_1, pygame.K_6]:
                 one_frame = True
 
             if event.key == pygame.K_BACKSPACE:
@@ -126,6 +131,7 @@ while run:
             if not points[-1][i]:
                 next_frame = False
                 one_frame = False
+                break
 
     if next_frame or one_frame:
         try:
@@ -136,6 +142,10 @@ while run:
             run = False
         new = True
         one_frame = False
+
+
+        if points[-1][0]:
+            time += 1 / fps
 
         points.append([points[-1][0]] + [None] * n)
 
@@ -178,8 +188,11 @@ while run:
         realy = int(scaled.get_height() / height * origin[1]) + y + offsety
         draw_circle_alpha(window, colors[0] + (255.,), (realx, realy), CIRCLE_RADIUS * scale)
 
-    rect.center = (150, 20)
-    window.blit(text, rect)
+    frame_pos_rect.center = (150, 20)
+    window.blit(frame_pos_text, frame_pos_rect)
+
+    time_rect.center = (w / 2, 20)
+    window.blit(time_text, time_rect)
 
     pygame.display.flip()
     clock.tick(fps)
